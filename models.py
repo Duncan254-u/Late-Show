@@ -18,3 +18,45 @@ class Episode(db.model, SerializaterMixin):
 
     appearances = db.relationship('Appearance', backref='episode', cascade='all, delete-orphan')
 
+    serialize_rules = ('-appearances.episode',)
+
+    def __repr__(self):
+        return f'<Episode {self.number}: {self.date}>'
+    
+    class Guest(db.Model, SerializerMixin):
+        __tablename__ = 'guests'
+
+        id = db.Column(db.Integer, primary_key=True)
+
+        name = db.Column(db.String(100), nullable=False)
+        occupation = db.Column(db.String(100), nullable=True)
+
+        appearances = db.relationship('Appearance', backref='guest', cascade='all, delete-orphan')
+        serialize_rules = ('-appearances.guest',)
+
+        def __repr__(self):
+            return f'<Guest {self.name}>'
+        
+        class Appearance(db.Model, SerializerMixin):
+            __tablename___ = 'appearances'
+
+            id = db.Column(db.Integer, primary_key=True)
+
+            episode_id = db.Column(db.Integer, db.ForeignKey('episodes.id'), nullable=False)
+            guest_id = db.Column(db.Integer, db.ForeignKey('guests.id'), nullable=False)
+
+            rating = db.Column(db.Interger, primary_key=True)
+            serialize_rules = ('-episode.appearances', '-guest.appearances')    
+
+            
+
+
+
+
+
+
+
+
+
+
+
