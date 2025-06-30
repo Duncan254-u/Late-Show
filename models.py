@@ -46,9 +46,20 @@ class Episode(db.model, SerializaterMixin):
             guest_id = db.Column(db.Integer, db.ForeignKey('guests.id'), nullable=False)
 
             rating = db.Column(db.Interger, primary_key=True)
-            serialize_rules = ('-episode.appearances', '-guest.appearances')    
+            serialize_rules = ('-episode.appearances', '-guest.appearances')
 
+            @validates('rating')
+            def validate_rating(self, key, rating):
+                if not isinstance(rating, int) or not (1 <= rating <= 5):
+                    raise ValueError('Rating must be an integer between 1 and 5')
+                return rating
+
+            def __repr__(self):
+                return f'<Appearance {self.id}: Episode {self.episode_id}, Guest {self.guest_id}, Rating {self.rating}>'
             
+
+
+
 
 
 
