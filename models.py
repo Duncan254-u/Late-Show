@@ -8,66 +8,45 @@ metadata = MetaData(naming_convention={
 })
 
 db = SQLAlchemy(metadata=metadata)
-class Episode(db.model, SerializaterMixin):
+
+class Episode(db.Model, SerializerMixin):
     __tablename__ = 'episodes'
 
     id = db.Column(db.Integer, primary_key=True)
-
     date = db.Column(db.String(20), nullable=False)
     number = db.Column(db.Integer, nullable=False)
-
     appearances = db.relationship('Appearance', backref='episode', cascade='all, delete-orphan')
-
     serialize_rules = ('-appearances.episode',)
 
     def __repr__(self):
         return f'<Episode {self.number}: {self.date}>'
-    
-    class Guest(db.Model, SerializerMixin):
-        __tablename__ = 'guests'
 
-        id = db.Column(db.Integer, primary_key=True)
+class Guest(db.Model, SerializerMixin):
+    __tablename__ = 'guests'
 
-        name = db.Column(db.String(100), nullable=False)
-        occupation = db.Column(db.String(100), nullable=True)
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    occupation = db.Column(db.String(100), nullable=False)
+    appearances = db.relationship('Appearance', backref='guest', cascade='all, delete-orphan')
+    serialize_rules = ('-appearances.guest',)
 
-        appearances = db.relationship('Appearance', backref='guest', cascade='all, delete-orphan')
-        serialize_rules = ('-appearances.guest',)
+    def __repr__(self):
+        return f'<Guest {self.name}: {self.occupation}>'
 
-        def __repr__(self):
-            return f'<Guest {self.name}>'
-        
-        class Appearance(db.Model, SerializerMixin):
-            __tablename___ = 'appearances'
+class Appearance(db.Model, SerializerMixin):
+    __tablename__ = 'appearances'
 
-            id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
+    episode_id = db.Column(db.Integer, db.ForeignKey('episodes.id'), nullable=False)
+    guest_id = db.Column(db.Integer, db.ForeignKey('guests.id'), nullable=False)
+    rating = db.Column(db.Integer, nullable=False)
+    serialize_rules = ('-episode.appearances', '-guest.appearances')
 
-            episode_id = db.Column(db.Integer, db.ForeignKey('episodes.id'), nullable=False)
-            guest_id = db.Column(db.Integer, db.ForeignKey('guests.id'), nullable=False)
+    @validates('rating')
+    def validate_rating(self, key, rating):
+        if not isinstance(rating, int) or rating < 1 or rating > 5:
+            raise ValueError("Rating must be an integer between 1 and 5")
+        return rating
 
-            rating = db.Column(db.Interger, primary_key=True)
-            serialize_rules = ('-episode.appearances', '-guest.appearances')
-
-            @validates('rating')
-            def validate_rating(self, key, rating):
-                if not isinstance(rating, int) or not (1 <= rating <= 5):
-                    raise ValueError('Rating must be an integer between 1 and 5')
-                return rating
-
-            def __repr__(self):
-                return f'<Appearance {self.id}: Episode {self.episode_id}, Guest {self.guest_id}, Rating {self.rating}>'
-            
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    def __repr__(self):
+        return f'<Appearance {self.guest.name} on Episode {self.episode.number}: Rating {self.rating}>'

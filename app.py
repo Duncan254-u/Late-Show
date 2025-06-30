@@ -23,9 +23,8 @@ def index():
         ]
     })
 
-@app.route('/episodes/<int:id>', methods=['GET'])
+@app.route('/episodes/<int:episode_id>', methods=['GET'])
 def get_episode_by_id(episode_id):
-
     try:
         episode = Episode.query.get(episode_id)
         if not episode:
@@ -46,11 +45,9 @@ def get_episode_by_id(episode_id):
         return jsonify(episode_data)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
-    @app.route('/guests', methods=['GET'])
-    def get_guests():
-        try:
 
+@app.route('/guests', methods=['GET'])
+def get_guests():
     try:
         guests = Guest.query.all()
         # Serialize guests, excluding appearances for this endpoint
@@ -61,7 +58,7 @@ def get_episode_by_id(episode_id):
     
 @app.route('/appearances', methods=['POST'])
 def create_appearance():
-     try:
+    try:
         data = request.get_json()
         
         if not data:
@@ -75,7 +72,7 @@ def create_appearance():
         if errors:
             return jsonify({"errors": errors}), 400
         
-        episode = Episode.Query.get(data['episode_id'])
+        episode = Episode.query.get(data['episode_id'])
         guest = Guest.query.get(data['guest_id'])
         if not episode:
             errors.append("Episode not found")
@@ -101,8 +98,17 @@ def create_appearance():
         }
         return jsonify(appearance_data), 201
     except Exception as e:
-db.seesion.rollback()
+        db.session.rollback()
         return jsonify({"error": str(e)}), 500
+    return jsonify({"error": "Resource not found"}), 404
+@app.errorhandler(500)
+def internal_server_error(error):
+    db.session.rollback()
+    return jsonify({"error": "Internal server error"}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True, port=5000)
+
 
 
 
